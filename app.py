@@ -30,33 +30,18 @@ with st.sidebar:
 
     st.markdown(f'<hr style="border:none;border-top:1px solid {T["border_subtle"]};margin:0 0 8px 0;"/>', unsafe_allow_html=True)
 
-    def nav_label(text):
-        st.markdown(f'<div class="nav-section">{text}</div>', unsafe_allow_html=True)
-
-    nav_label("Manager")
-    page = st.radio("nav", options=[
+    st.markdown('<div class="nav-section">Navigation</div>', unsafe_allow_html=True)
+    active = st.radio("nav", options=[
         "🌅  Morning Briefing",
         "📄  Weekly Report",
         "🏫  Vedantu Network",
-    ], label_visibility="collapsed", key="nav1")
-
-    nav_label("Analyst")
-    page2 = st.radio("nav2", options=[
         "🕵️  Competitor Intelligence",
         "📈  Trend Detection",
         "🔍  Content Gap Analysis",
         "🔎  Search",
-    ], label_visibility="collapsed", key="nav2")
-
-    nav_label("AI Tools")
-    page3 = st.radio("nav3", options=[
         "🤖  AI Strategist",
-    ], label_visibility="collapsed", key="nav3")
-
-    nav_label("Data")
-    page4 = st.radio("nav4", options=[
         "⬇️  Export",
-    ], label_visibility="collapsed", key="nav4")
+    ], label_visibility="collapsed", key="main_nav")
 
     st.markdown(f'<hr style="border:none;border-top:1px solid {T["border_subtle"]};margin:12px 0 8px 0;"/>', unsafe_allow_html=True)
     st.markdown(f"""
@@ -66,16 +51,6 @@ with st.sidebar:
         Free tier API
     </div>
     """, unsafe_allow_html=True)
-
-# ── Active page resolution ────────────────────────────
-_all = {"nav1": page, "nav2": page2, "nav3": page3, "nav4": page4}
-if "last_nav" not in st.session_state:
-    st.session_state.last_nav = "nav1"
-for key, val in _all.items():
-    if val != st.session_state.get(f"prev_{key}"):
-        st.session_state.last_nav = key
-        st.session_state[f"prev_{key}"] = val
-active = _all[st.session_state.last_nav]
 
 # ── Router ────────────────────────────────────────────
 if   active == "🌅  Morning Briefing":
