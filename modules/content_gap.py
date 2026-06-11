@@ -287,5 +287,11 @@ Be specific. Name subjects, topics, and title patterns.
 Write as if presenting to a content VP who needs to make decisions today.
     """
     with st.spinner("Gemini is analysing gaps..."):
-        response = get_gemini_model().generate_content(prompt)
+        try:
+            response = get_gemini_model().generate_content(prompt)
+        except Exception:
+            st.warning(
+                "Gemini quota is unavailable right now, so the AI gap report is skipped. The heatmap above is still available."
+            )
+            return
     st.markdown(response.text)

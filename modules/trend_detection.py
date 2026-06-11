@@ -279,5 +279,11 @@ Based on this live market data, provide:
 Be specific. Reference actual channel names and video titles from the data. 4 paragraphs max.
         """
         with st.spinner("Gemini is reading the market..."):
-            response = get_gemini_model().generate_content(prompt)
+            try:
+                response = get_gemini_model().generate_content(prompt)
+            except Exception:
+                st.warning(
+                    "Gemini quota is unavailable right now, so the AI narrative is skipped. The charts above still work."
+                )
+                return
         st.markdown(response.text)
