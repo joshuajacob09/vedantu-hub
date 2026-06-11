@@ -73,6 +73,10 @@ def render():
 
     divider()
 
+    if not st.button("📅 Load Morning Briefing", type="primary"):
+        st.info("Click the button above to fetch live channel data.")
+        return
+
     # ── Fetch data ────────────────────────────────────
     with st.spinner("Loading channel data..."):
         tier1 = get_competitors_by_priority(1)
