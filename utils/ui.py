@@ -1,466 +1,467 @@
-# utils/ui.py
-# ─────────────────────────────────────────────────────
-# Vedantu Content Intelligence Hub — Design System
-#
-# Single source of truth for all UI primitives.
-# Every module imports from here. Never write inline
-# style strings in module files.
-#
-# Token structure mirrors Apple HIG:
-#   Colors → Typography → Spacing → Components
-# ─────────────────────────────────────────────────────
+# utils/ui.py — Enterprise Design System v2
+# Spec: Apple + Linear + Vercel. Zero student-project energy.
 
 import streamlit as st
 
-# ── Design tokens ─────────────────────────────────────
-TOKENS = {
-    # Backgrounds
-    "bg_base":        "#0a0c12",
-    "bg_surface":     "#111318",
-    "bg_elevated":    "#181b24",
-    "bg_overlay":     "#1e2130",
-
-    # Borders
-    "border_subtle":  "#1f2335",
-    "border_default": "#2a2d3e",
-    "border_strong":  "#3a3d52",
-
-    # Brand
-    "indigo":         "#6366f1",
-    "indigo_dim":     "#6366f118",
-    "indigo_glow":    "#6366f130",
-
-    # Semantic
-    "green":          "#22c55e",
-    "green_dim":      "#22c55e18",
-    "amber":          "#f59e0b",
-    "amber_dim":      "#f59e0b18",
-    "red":            "#ef4444",
-    "red_dim":        "#ef444418",
-    "purple":         "#a855f7",
-    "purple_dim":     "#a855f718",
-
-    # Text
-    "text_primary":   "#e8eaf2",
-    "text_secondary": "#8b91a8",
-    "text_muted":     "#4b5568",
-    "text_accent":    "#6366f1",
-
-    # Chart
-    "chart_bg":       "rgba(0,0,0,0)",
+# ── Strict token set — no deviations ─────────────────
+C = {
+    "bg":          "#0B1120",
+    "card":        "#111827",
+    "border":      "rgba(255,255,255,0.08)",
+    "accent":      "#6366F1",
+    "success":     "#22C55E",
+    "warning":     "#F59E0B",
+    "danger":      "#EF4444",
+    "text":        "#F8FAFC",
+    "text2":       "#94A3B8",
+    "text3":       "#475569",
+    "accent_dim":  "rgba(99,102,241,0.12)",
+    "success_dim": "rgba(34,197,94,0.10)",
+    "warning_dim": "rgba(245,158,11,0.10)",
+    "danger_dim":  "rgba(239,68,68,0.10)",
+    "chart_bg":    "rgba(0,0,0,0)",
 }
 
-T = TOKENS   # shorthand
+# shorthand
+T = C
 
-
-# ── Global CSS injected once in app.py ───────────────
-GLOBAL_CSS = f"""
+GLOBAL_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* ── Reset & base ── */
-html, body, [class*="css"], .stMarkdown, .stText {{
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
     -webkit-font-smoothing: antialiased;
-}}
+    -moz-osx-font-smoothing: grayscale;
+}
 
-.stApp {{
-    background-color: {T['bg_base']};
-    background-image: radial-gradient(ellipse at 20% 0%, #6366f10a 0%, transparent 60%);
-}}
+/* ── App shell ── */
+.stApp {
+    background-color: #0B1120 !important;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ── Hide Streamlit chrome ── */
+#MainMenu, footer, header { display: none !important; }
+.stDeployButton { display: none !important; }
+[data-testid="stToolbar"] { display: none !important; }
 
 /* ── Sidebar ── */
-section[data-testid="stSidebar"] {{
-    background: {T['bg_surface']} !important;
-    border-right: 1px solid {T['border_subtle']} !important;
-}}
-section[data-testid="stSidebar"] .stRadio label {{
-    font-size: 13px !important;
-    font-weight: 500;
-    color: {T['text_secondary']};
-    padding: 6px 10px;
-    border-radius: 8px;
-    transition: color 0.15s;
-}}
-section[data-testid="stSidebar"] .stRadio label:hover {{
-    color: {T['text_primary']};
-}}
+section[data-testid="stSidebar"] {
+    background: #0D1526 !important;
+    border-right: 1px solid rgba(255,255,255,0.06) !important;
+    width: 220px !important;
+}
+section[data-testid="stSidebar"] > div {
+    padding: 0 !important;
+}
 
 /* ── Metric cards ── */
-div[data-testid="metric-container"] {{
-    background: {T['bg_elevated']};
-    border: 1px solid {T['border_default']};
-    border-radius: 14px;
-    padding: 18px 20px;
-    transition: border-color 0.2s;
-}}
-div[data-testid="metric-container"]:hover {{
-    border-color: {T['border_strong']};
-}}
-div[data-testid="metric-container"] [data-testid="stMetricLabel"] {{
+div[data-testid="metric-container"] {
+    background: #111827 !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+}
+div[data-testid="metric-container"] [data-testid="stMetricLabel"] {
     font-size: 11px !important;
     font-weight: 600 !important;
-    letter-spacing: 0.06em;
-    color: {T['text_muted']} !important;
-    text-transform: uppercase;
-}}
-div[data-testid="metric-container"] [data-testid="stMetricValue"] {{
-    font-size: 24px !important;
+    letter-spacing: 0.08em !important;
+    color: #94A3B8 !important;
+    text-transform: uppercase !important;
+}
+div[data-testid="metric-container"] [data-testid="stMetricValue"] {
+    font-size: 28px !important;
     font-weight: 700 !important;
-    color: {T['text_primary']} !important;
-    letter-spacing: -0.02em;
-}}
-div[data-testid="metric-container"] [data-testid="stMetricDelta"] {{
+    color: #F8FAFC !important;
+    letter-spacing: -0.03em !important;
+    line-height: 1.1 !important;
+}
+div[data-testid="metric-container"] [data-testid="stMetricDelta"] {
     font-size: 12px !important;
     font-weight: 500 !important;
-}}
+}
 
-/* ── Headings ── */
-h1 {{
-    font-size: 26px !important;
+/* ── Typography ── */
+h1 {
+    font-size: 32px !important;
     font-weight: 700 !important;
-    color: {T['text_primary']} !important;
-    letter-spacing: -0.03em !important;
-    line-height: 1.2 !important;
-}}
-h2 {{
-    font-size: 18px !important;
+    color: #F8FAFC !important;
+    letter-spacing: -0.04em !important;
+    line-height: 1.15 !important;
+    margin: 0 0 4px 0 !important;
+}
+h2 {
+    font-size: 22px !important;
     font-weight: 600 !important;
-    color: {T['text_primary']} !important;
+    color: #F8FAFC !important;
     letter-spacing: -0.02em !important;
-}}
-h3 {{
-    font-size: 14px !important;
+    margin: 0 !important;
+}
+h3 {
+    font-size: 15px !important;
     font-weight: 600 !important;
-    color: {T['text_secondary']} !important;
-    letter-spacing: 0.01em !important;
-}}
-
-/* ── Caption / small text ── */
-.stCaption, .caption, small {{
-    font-size: 12px !important;
-    color: {T['text_muted']} !important;
-}}
+    color: #94A3B8 !important;
+}
+p, li { font-size: 15px !important; color: #94A3B8 !important; line-height: 1.6 !important; }
 
 /* ── Buttons ── */
-.stButton > button {{
-    border-radius: 10px !important;
-    font-weight: 600 !important;
+.stButton > button {
+    height: 38px !important;
+    border-radius: 8px !important;
     font-size: 13px !important;
-    letter-spacing: 0.01em;
-    padding: 8px 20px !important;
-    border: 1px solid {T['border_default']} !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.01em !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    background: #111827 !important;
+    color: #F8FAFC !important;
     transition: all 0.15s ease !important;
-}}
-.stButton > button:hover {{
-    border-color: {T['border_strong']} !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(99,102,241,0.15) !important;
-}}
-.stButton > button[kind="primary"] {{
-    background: linear-gradient(135deg, #6366f1, #818cf8) !important;
-    border-color: transparent !important;
-    color: white !important;
-}}
+    padding: 0 18px !important;
+}
+.stButton > button:hover {
+    border-color: rgba(255,255,255,0.2) !important;
+    background: #1a2235 !important;
+}
+.stButton > button[kind="primary"] {
+    background: #6366F1 !important;
+    border-color: #6366F1 !important;
+    color: #fff !important;
+}
+.stButton > button[kind="primary"]:hover {
+    background: #5558e3 !important;
+    border-color: #5558e3 !important;
+}
+
+/* ── Inputs ── */
+div[data-testid="stSelectbox"] > div > div,
+div[data-testid="stTextInput"] > div > div input {
+    background: #111827 !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 8px !important;
+    color: #F8FAFC !important;
+    font-size: 14px !important;
+}
 
 /* ── Dataframe ── */
-div[data-testid="stDataFrame"] {{
+div[data-testid="stDataFrame"] {
     border-radius: 12px !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
     overflow: hidden !important;
-    border: 1px solid {T['border_default']} !important;
-}}
+}
 
 /* ── Tabs ── */
-.stTabs [data-baseweb="tab-list"] {{
-    background: {T['bg_surface']} !important;
+.stTabs [data-baseweb="tab-list"] {
+    background: #111827 !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
     border-radius: 10px !important;
     padding: 4px !important;
     gap: 2px !important;
-    border: 1px solid {T['border_subtle']} !important;
-}}
-.stTabs [data-baseweb="tab"] {{
-    border-radius: 8px !important;
-    font-weight: 500 !important;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 7px !important;
     font-size: 13px !important;
-    color: {T['text_secondary']} !important;
-    padding: 6px 16px !important;
-}}
-.stTabs [aria-selected="true"] {{
-    background: {T['bg_elevated']} !important;
-    color: {T['text_primary']} !important;
-}}
+    font-weight: 500 !important;
+    color: #94A3B8 !important;
+    padding: 6px 14px !important;
+    border: none !important;
+}
+.stTabs [aria-selected="true"] {
+    background: #1e2a3e !important;
+    color: #F8FAFC !important;
+}
 
 /* ── Expander ── */
-div[data-testid="stExpander"] {{
-    background: {T['bg_elevated']} !important;
-    border: 1px solid {T['border_subtle']} !important;
-    border-radius: 12px !important;
-}}
+div[data-testid="stExpander"] {
+    background: #111827 !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 10px !important;
+}
+div[data-testid="stExpander"] summary {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #94A3B8 !important;
+}
 
 /* ── Alerts ── */
-.stAlert {{
+.stAlert {
     border-radius: 10px !important;
     font-size: 13px !important;
-    border-width: 1px !important;
-}}
+}
 
-/* ── Selectbox / inputs ── */
-div[data-testid="stSelectbox"] > div,
-div[data-testid="stTextInput"] > div > div {{
-    border-radius: 10px !important;
-    border-color: {T['border_default']} !important;
-    background: {T['bg_elevated']} !important;
-    font-size: 13px !important;
-}}
-
-/* ── Radio ── */
-.stRadio [data-testid="stWidgetLabel"] {{
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    color: {T['text_muted']} !important;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-}}
-
-/* ── Progress bar ── */
-.stProgress > div > div > div {{
-    background: linear-gradient(90deg, #6366f1, #818cf8) !important;
+/* ── Progress ── */
+.stProgress > div > div > div {
+    background: #6366F1 !important;
     border-radius: 99px !important;
-}}
-
-/* ── Divider ── */
-hr {{
-    border-color: {T['border_subtle']} !important;
-    margin: 20px 0 !important;
-}}
+}
 
 /* ── Spinner ── */
-.stSpinner > div {{
-    border-top-color: {T['indigo']} !important;
-}}
+.stSpinner > div { border-top-color: #6366F1 !important; }
+
+/* ── Radio ── */
+.stRadio > div { gap: 2px !important; }
+.stRadio label {
+    font-size: 13px !important;
+    color: #94A3B8 !important;
+    font-weight: 500 !important;
+}
+
+/* ── Caption ── */
+.stCaption { font-size: 13px !important; color: #475569 !important; }
+
+/* ── Divider ── */
+hr {
+    border: none !important;
+    border-top: 1px solid rgba(255,255,255,0.06) !important;
+    margin: 28px 0 !important;
+}
 
 /* ── Scrollbar ── */
-::-webkit-scrollbar {{ width: 4px; height: 4px; }}
-::-webkit-scrollbar-track {{ background: {T['bg_base']}; }}
-::-webkit-scrollbar-thumb {{ background: {T['border_strong']}; border-radius: 99px; }}
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
 
-/* ── Nav section labels ── */
-.nav-section {{
+/* ── Mobile ── */
+@media (max-width: 768px) {
+    h1 { font-size: 24px !important; }
+    h2 { font-size: 18px !important; }
+    section[data-testid="stSidebar"] { width: 100% !important; }
+    .stApp { max-width: 100% !important; }
+}
+
+/* ── Sidebar nav items ── */
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #94A3B8;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    margin: 1px 8px;
+    text-decoration: none;
+}
+.nav-item:hover { background: rgba(255,255,255,0.05); color: #F8FAFC; }
+.nav-item.active { background: rgba(99,102,241,0.12); color: #F8FAFC; }
+.nav-item .icon { font-size: 14px; width: 18px; text-align: center; opacity: 0.7; }
+.nav-section-label {
     font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.12em;
-    color: {T['text_muted']};
+    letter-spacing: 0.1em;
+    color: #334155;
     text-transform: uppercase;
-    padding: 12px 0 4px 2px;
-}}
+    padding: 16px 22px 6px;
+}
 
-/* ── Page header ── */
-.page-header {{
-    padding-bottom: 8px;
-    margin-bottom: 4px;
-}}
-.page-header h1 {{ margin-bottom: 2px !important; }}
+/* ── Page layout ── */
+.page-content {
+    padding: 28px 32px 80px;
+    max-width: 1400px;
+}
 
 /* ── Footer ── */
-.footer {{
+.app-footer {
     position: fixed; bottom: 0; left: 0; right: 0;
-    text-align: center; padding: 7px;
-    background: {T['bg_surface']};
-    color: {T['text_muted']};
-    font-size: 11px;
-    border-top: 1px solid {T['border_subtle']};
+    height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: #0B1120;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 11px; color: #334155;
+    letter-spacing: 0.04em;
     z-index: 999;
-    letter-spacing: 0.03em;
-}}
+}
 </style>
 """
 
-
-# ── Component library ─────────────────────────────────
+# ─────────────────────────────────────────────────────
+# Core functions
+# ─────────────────────────────────────────────────────
 
 def inject_css():
-    """Call once at the top of app.py."""
     st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
 
 
-def page_header(title: str, subtitle: str = "", icon: str = ""):
-    """Consistent page header with title and optional subtitle."""
-    full_title = f"{icon} {title}" if icon else title
+def page_header(title: str, subtitle: str = "", right_content: str = ""):
+    """Enterprise page header — title left, optional content right."""
     st.markdown(f"""
-    <div class="page-header">
-        <h1>{full_title}</h1>
-        {'<p style="color:'+T['text_muted']+';font-size:13px;margin:0;line-height:1.5;">'+subtitle+'</p>' if subtitle else ''}
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;
+                padding:32px 0 24px;border-bottom:1px solid rgba(255,255,255,0.06);
+                margin-bottom:28px;">
+        <div>
+            <h1>{title}</h1>
+            {'<p style="margin:6px 0 0;font-size:14px;color:#475569;line-height:1.5;">'+subtitle+'</p>' if subtitle else ''}
+        </div>
+        {'<div style="padding-top:4px;">'+right_content+'</div>' if right_content else ''}
     </div>
     """, unsafe_allow_html=True)
 
 
 def section_header(title: str, subtitle: str = ""):
-    """Section divider with title."""
+    """Section title with optional description."""
     st.markdown(f"""
-    <div style="margin: 28px 0 12px 0;">
-        <h2 style="margin:0;">{title}</h2>
-        {'<p style="color:'+T['text_muted']+';font-size:12px;margin:4px 0 0 0;">'+subtitle+'</p>' if subtitle else ''}
+    <div style="margin:32px 0 16px;">
+        <h2>{title}</h2>
+        {'<p style="font-size:13px;color:#475569;margin:4px 0 0;">'+subtitle+'</p>' if subtitle else ''}
     </div>
     """, unsafe_allow_html=True)
 
 
-def kpi_card(title: str, value: str, subtitle: str = "",
-             color: str = None, icon: str = ""):
+def kpi_card(label: str, value: str, delta: str = "",
+             delta_positive: bool = True, sublabel: str = ""):
     """
-    Glass KPI card.
-    color: 'green' | 'red' | 'amber' | 'indigo' | 'purple' | None
+    Enterprise KPI card.
+    Use inside st.columns() for a proper grid.
     """
-    c = T.get(color, T["indigo"]) if color else T["indigo"]
-    c_dim = T.get(f"{color}_dim", T["indigo_dim"]) if color else T["indigo_dim"]
-    icon_html = f'<span style="font-size:18px;margin-bottom:6px;display:block;">{icon}</span>' if icon else ""
+    delta_color = C["success"] if delta_positive else C["danger"]
+    delta_bg    = C["success_dim"] if delta_positive else C["danger_dim"]
+    delta_html  = f"""
+        <div style="display:inline-flex;align-items:center;gap:4px;
+                    background:{delta_bg};border-radius:6px;
+                    padding:2px 8px;margin-top:8px;">
+            <span style="font-size:11px;font-weight:600;color:{delta_color};">
+                {'↑' if delta_positive else '↓'} {delta}
+            </span>
+        </div>""" if delta else ""
+
+    sublabel_html = f'<div style="font-size:12px;color:{C["text3"]};margin-top:6px;">{sublabel}</div>' if sublabel else ""
+
     st.markdown(f"""
-    <div style="
-        background: linear-gradient(145deg, {T['bg_elevated']}, {T['bg_surface']});
-        border: 1px solid {T['border_default']};
-        border-top: 2px solid {c};
-        border-radius: 14px;
-        padding: 18px 20px;
-        height: 100%;
-    ">
-        {icon_html}
-        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;
-                    color:{T['text_muted']};text-transform:uppercase;
-                    margin-bottom:8px;">{title}</div>
-        <div style="font-size:26px;font-weight:700;color:{T['text_primary']};
-                    letter-spacing:-0.03em;line-height:1;">{value}</div>
-        {'<div style="font-size:12px;color:'+T['text_muted']+';margin-top:6px;">'+subtitle+'</div>' if subtitle else ""}
+    <div style="background:{C['card']};border:1px solid {C['border']};
+                border-radius:12px;padding:20px 22px;height:100%;
+                transition:border-color 0.15s;">
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;
+                    color:{C['text2']};text-transform:uppercase;margin-bottom:10px;">
+            {label}
+        </div>
+        <div style="font-size:28px;font-weight:700;color:{C['text']};
+                    letter-spacing:-0.03em;line-height:1.1;">
+            {value}
+        </div>
+        {delta_html}
+        {sublabel_html}
     </div>
     """, unsafe_allow_html=True)
 
 
-def glass_card(content_html: str, color: str = "default",
-               padding: str = "20px 24px"):
+def insight_card(priority: str, title: str, reason: str,
+                 action: str, confidence: int = 0, impact: str = ""):
     """
-    Generic glass card wrapper.
-    color: 'default' | 'green' | 'red' | 'amber' | 'indigo' | 'purple'
+    AI recommendation card. priority: HIGH | MEDIUM | LOW
     """
-    border = {
-        "default": T["border_default"],
-        "green":   T["green"],
-        "red":     T["red"],
-        "amber":   T["amber"],
-        "indigo":  T["indigo"],
-        "purple":  T["purple"],
-    }.get(color, T["border_default"])
+    colors = {
+        "HIGH":   (C["danger"],   C["danger_dim"]),
+        "MEDIUM": (C["warning"],  C["warning_dim"]),
+        "LOW":    (C["accent"],   C["accent_dim"]),
+    }
+    c, bg = colors.get(priority, colors["MEDIUM"])
 
-    bg = {
-        "default": T["bg_elevated"],
-        "green":   T["green_dim"],
-        "red":     T["red_dim"],
-        "amber":   T["amber_dim"],
-        "indigo":  T["indigo_dim"],
-        "purple":  T["purple_dim"],
-    }.get(color, T["bg_elevated"])
+    conf_html = ""
+    if confidence:
+        conf_html = f"""
+        <div style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+            <div style="flex:1;height:3px;background:rgba(255,255,255,0.06);border-radius:99px;">
+                <div style="width:{confidence}%;height:100%;background:{c};border-radius:99px;"></div>
+            </div>
+            <span style="font-size:11px;color:{C['text2']};white-space:nowrap;">
+                {confidence}% confidence
+            </span>
+        </div>"""
+
+    impact_html = f'<div style="font-size:12px;color:{C["text2"]};margin-top:8px;padding-top:8px;border-top:1px solid {C["border"]};">Impact: {impact}</div>' if impact else ""
 
     st.markdown(f"""
-    <div style="
-        background:{bg};
-        border:1px solid {border};
-        border-radius:14px;
-        padding:{padding};
-        margin-bottom:12px;
-    ">{content_html}</div>
+    <div style="background:{C['card']};border:1px solid {C['border']};
+                border-left:3px solid {c};border-radius:12px;
+                padding:18px 20px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <span style="background:{bg};color:{c};font-size:10px;font-weight:700;
+                         letter-spacing:0.08em;border-radius:4px;padding:2px 8px;">
+                {priority}
+            </span>
+            <span style="font-size:14px;font-weight:600;color:{C['text']};">
+                {title}
+            </span>
+        </div>
+        <p style="font-size:13px;color:{C['text2']};margin:0 0 10px;line-height:1.55;">
+            {reason}
+        </p>
+        <div style="background:rgba(255,255,255,0.03);border-radius:8px;
+                    padding:10px 14px;border-left:2px solid {c};">
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;
+                        color:{C['text3']};margin-bottom:4px;">SUGGESTED ACTION</div>
+            <div style="font-size:13px;color:{C['text']};line-height:1.5;">{action}</div>
+        </div>
+        {conf_html}
+        {impact_html}
+    </div>
     """, unsafe_allow_html=True)
 
 
-def badge(text: str, color: str = "indigo") -> str:
-    """Inline badge HTML — use inside glass_card content."""
-    c     = T.get(color, T["indigo"])
-    c_dim = T.get(f"{color}_dim", T["indigo_dim"])
-    return (f'<span style="background:{c_dim};border:1px solid {c};color:{c};'
-            f'border-radius:6px;padding:2px 10px;font-size:10px;'
-            f'font-weight:700;letter-spacing:.06em;">{text}</span>')
+def alert_card(message: str, type: str = "info"):
+    """Inline alert — type: info | warning | success | danger"""
+    colors = {
+        "info":    (C["accent"],  C["accent_dim"],  "ℹ"),
+        "warning": (C["warning"], C["warning_dim"], "⚠"),
+        "success": (C["success"], C["success_dim"], "✓"),
+        "danger":  (C["danger"],  C["danger_dim"],  "!"),
+    }
+    c, bg, icon = colors.get(type, colors["info"])
+    st.markdown(f"""
+    <div style="background:{bg};border:1px solid {c}22;border-radius:10px;
+                padding:12px 16px;display:flex;align-items:flex-start;gap:10px;
+                margin-bottom:12px;">
+        <span style="color:{c};font-weight:700;font-size:13px;flex-shrink:0;">{icon}</span>
+        <span style="color:{C['text']};font-size:13px;line-height:1.5;">{message}</span>
+    </div>
+    """, unsafe_allow_html=True)
 
 
-def label(text: str) -> str:
-    """Uppercase section label HTML — use inside cards."""
-    return (f'<div style="font-size:10px;font-weight:700;letter-spacing:.12em;'
-            f'color:{T["text_muted"]};text-transform:uppercase;'
-            f'margin-bottom:10px;">{text}</div>')
-
-
-def body_text(text: str, muted: bool = False) -> str:
-    """Body paragraph HTML."""
-    color = T["text_secondary"] if muted else T["text_primary"]
-    return f'<p style="color:{color};font-size:13px;line-height:1.65;margin:0;">{text}</p>'
+def empty_state(message: str, icon: str = "—"):
+    """Empty / no-data state."""
+    st.markdown(f"""
+    <div style="text-align:center;padding:56px 24px;
+                background:{C['card']};border:1px dashed {C['border']};
+                border-radius:12px;">
+        <div style="font-size:28px;margin-bottom:12px;opacity:0.4;">{icon}</div>
+        <div style="font-size:14px;color:{C['text3']};font-weight:500;">{message}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 def divider():
-    """Thin divider with correct token color."""
     st.markdown(
-        f'<hr style="border:none;border-top:1px solid {T["border_subtle"]};'
-        f'margin:24px 0;"/>',
-        unsafe_allow_html=True,
-    )
+        '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:28px 0;"/>',
+        unsafe_allow_html=True)
 
 
-def stat_row(items: list[tuple]) -> str:
-    """
-    Horizontal stat row inside a card.
-    items = [("Label", "Value"), ...]
-    """
-    cells = "".join([
-        f'''<div style="text-align:center;padding:0 16px;
-                        border-right:1px solid {T['border_subtle']};"
-                        >
-                <div style="font-size:18px;font-weight:700;
-                            color:{T['text_primary']};letter-spacing:-0.02em;">
-                    {v}
-                </div>
-                <div style="font-size:10px;font-weight:600;
-                            color:{T['text_muted']};letter-spacing:.08em;
-                            text-transform:uppercase;margin-top:2px;">
-                    {k}
-                </div>
-            </div>'''
-        for k, v in items
-    ])
-    return f'<div style="display:flex;align-items:center;gap:0;">{cells}</div>'
+def badge(text: str, color: str = "accent") -> str:
+    """Inline badge HTML string."""
+    c  = C.get(color, C["accent"])
+    bg = C.get(f"{color}_dim", C["accent_dim"])
+    return (f'<span style="background:{bg};color:{c};border-radius:4px;'
+            f'padding:2px 8px;font-size:10px;font-weight:700;'
+            f'letter-spacing:0.06em;">{text}</span>')
 
 
-def empty_state(message: str, icon: str = "📭"):
-    """Empty state card shown when no data is available."""
-    st.markdown(f"""
-    <div style="
-        text-align:center;
-        padding:48px 24px;
-        background:{T['bg_elevated']};
-        border:1px dashed {T['border_default']};
-        border-radius:14px;
-        color:{T['text_muted']};
-    ">
-        <div style="font-size:32px;margin-bottom:12px;">{icon}</div>
-        <div style="font-size:13px;font-weight:500;">{message}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-
-def plotly_defaults() -> dict:
-    """
-    Standard layout kwargs for every Plotly figure.
-    Usage: fig.update_layout(**plotly_defaults())
-    """
+def plotly_defaults(height: int = 320) -> dict:
+    """Standard Plotly layout. Pass height per chart."""
     return dict(
         template="plotly_dark",
-        paper_bgcolor=T["chart_bg"],
-        plot_bgcolor=T["chart_bg"],
-        font=dict(family="Inter, sans-serif", color=T["text_secondary"], size=12),
-        title_font=dict(family="Inter, sans-serif", color=T["text_primary"],
-                        size=14, weight="bold"),
-        margin=dict(l=0, r=0, t=40, b=0),
-        xaxis=dict(
-            gridcolor=T["border_subtle"],
-            linecolor=T["border_subtle"],
-            tickfont=dict(size=11),
-        ),
-        yaxis=dict(
-            gridcolor=T["border_subtle"],
-            linecolor=T["border_subtle"],
-            tickfont=dict(size=11),
-        ),
+        paper_bgcolor=C["chart_bg"],
+        plot_bgcolor=C["chart_bg"],
+        font=dict(family="Inter, sans-serif", color=C["text2"], size=11),
+        title_font=dict(family="Inter, sans-serif", color=C["text"], size=13),
+        margin=dict(l=0, r=8, t=36, b=0),
+        height=height,
+        xaxis=dict(gridcolor="rgba(255,255,255,0.04)",
+                   linecolor="rgba(255,255,255,0.04)",
+                   tickfont=dict(size=11), showgrid=True),
+        yaxis=dict(gridcolor="rgba(255,255,255,0.04)",
+                   linecolor="rgba(255,255,255,0.04)",
+                   tickfont=dict(size=11), showgrid=False),
     )

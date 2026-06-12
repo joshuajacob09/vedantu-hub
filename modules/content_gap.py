@@ -18,6 +18,7 @@ from collections import defaultdict
 
 from config import VEDANTU_CHANNELS, COMPETITOR_CHANNELS
 from utils.registry import get_competitors_by_priority, get_competitors_by_category
+from utils.ui import C, T, page_header, section_header, kpi_card, divider, empty_state, plotly_defaults
 from utils.youtube_helpers import get_recent_uploads
 from utils.api_clients import get_gemini_model
 
@@ -49,8 +50,7 @@ def _tag(title: str) -> list[str]:
 
 
 def render():
-    st.header("🔍 Content Gap Analysis")
-    st.caption("See the full picture of what the market covers vs what Vedantu covers.")
+    page_header('Content Gap Analysis', 'See the full picture of what the market covers vs what Vedantu covers.', '🔍')
 
     mode = st.radio(
         "Analysis mode",
@@ -287,11 +287,5 @@ Be specific. Name subjects, topics, and title patterns.
 Write as if presenting to a content VP who needs to make decisions today.
     """
     with st.spinner("Gemini is analysing gaps..."):
-        try:
-            response = get_gemini_model().generate_content(prompt)
-        except Exception:
-            st.warning(
-                "Gemini quota is unavailable right now, so the AI gap report is skipped. The heatmap above is still available."
-            )
-            return
+        response = get_gemini_model().generate_content(prompt)
     st.markdown(response.text)

@@ -6,12 +6,12 @@ import streamlit as st
 import pandas as pd
 import json
 from config import ALL_CHANNELS, VEDANTU_CHANNELS, COMPETITOR_CHANNELS
+from utils.ui import C, T, page_header, divider
 from utils.youtube_helpers import get_recent_uploads, get_channel_info
 
 
 def render():
-    st.header("⬇️ Export Data")
-    st.caption("Download raw channel data as CSV or JSON for offline analysis.")
+    page_header('Export Data', 'Download raw channel data as CSV or JSON for offline analysis.', '⬇️')
 
     # ── Options ───────────────────────────────────────
     col1, col2 = st.columns(2)

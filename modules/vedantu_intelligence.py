@@ -17,6 +17,7 @@ from collections import Counter
 from datetime import date
 
 from config import VEDANTU_CHANNELS, COMPETITOR_CHANNELS
+from utils.ui import C, T, page_header, section_header, kpi_card, divider, empty_state, plotly_defaults
 from utils.youtube_helpers import get_channel_info, get_recent_uploads
 
 
@@ -49,8 +50,7 @@ def _extract_patterns(titles: list[str]) -> dict:
 
 
 def render():
-    st.header("🏫 Vedantu Intelligence")
-    st.caption("Full network health overview + deep channel benchmarking.")
+    page_header('Vedantu Intelligence', 'Full network health overview + deep channel benchmarking.', '🏫')
 
     view = st.radio(
         "View",

@@ -5,12 +5,12 @@
 import streamlit as st
 import pandas as pd
 from config import ALL_CHANNELS, VEDANTU_CHANNELS
+from utils.ui import C, T, page_header, divider, empty_state
 from utils.youtube_helpers import get_recent_uploads
 
 
 def render():
-    st.header("🔎 Search")
-    st.caption("Search across all channels by keyword. Searches video titles from recent uploads.")
+    page_header('Search', 'Search across all channels by keyword. Searches video titles from recent uploads.', '🔎')
 
     query = st.text_input(
         "Enter a keyword or topic",

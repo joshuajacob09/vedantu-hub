@@ -19,6 +19,7 @@ import plotly.graph_objects as go
 from collections import Counter
 
 from utils.registry import get_competitors_by_priority, get_competitors_by_category
+from utils.ui import C, T, page_header, section_header, kpi_card, divider, empty_state, plotly_defaults
 from utils.youtube_helpers import get_recent_uploads
 from utils.api_clients import get_gemini_model
 
@@ -58,8 +59,7 @@ def _tag_subjects(title: str) -> list[str]:
 
 
 def render():
-    st.header("📈 Trend Detection")
-    st.caption("What the market is doing right now — data-first, AI on demand.")
+    page_header('Trend Detection', 'What the market is doing right now — data-first, AI on demand.', '📈')
 
     # Scope selector
     col1, col2 = st.columns([2, 1])
@@ -279,11 +279,5 @@ Based on this live market data, provide:
 Be specific. Reference actual channel names and video titles from the data. 4 paragraphs max.
         """
         with st.spinner("Gemini is reading the market..."):
-            try:
-                response = get_gemini_model().generate_content(prompt)
-            except Exception:
-                st.warning(
-                    "Gemini quota is unavailable right now, so the AI narrative is skipped. The charts above still work."
-                )
-                return
+            response = get_gemini_model().generate_content(prompt)
         st.markdown(response.text)
