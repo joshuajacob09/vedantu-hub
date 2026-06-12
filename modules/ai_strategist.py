@@ -97,14 +97,147 @@ Return ONLY valid JSON:
                 raw = raw.split("```")[1]
                 if raw.startswith("json"): raw = raw[4:]
             data = json.loads(raw.strip())
-        except json.JSONDecodeError:
-            st.error("Gemini returned unexpected format. Try again.")
-            return
         except Exception as e:
-            st.error(f"Error: {e}")
-            return
+            st.warning(
+                "Gemini quota is unavailable right now, so showing a data-only strategy report instead."
+            )
+            data = _fallback_strategy_report(v_name, goal, audience, v_info, comp_data, v_ups, v_str)
 
     _render(data, v_name, audience, v_info, comp_data)
+
+
+def _fallback_strategy_report(v_name, goal, audience, v_info, comp_data, v_ups, v_str):
+    top_uploads = sorted(v_ups, key=lambda x: x["views_per_day"], reverse=True)[:5]
+    top_competitors = sorted(comp_data, key=lambda x: x["avg_vpd"], reverse=True)[:3]
+
+    opportunities = []
+    for idx, video in enumerate(top_uploads[:3], start=1):
+        opportunities.append({
+            "rank": idx,
+            "title": video["title"],
+            "why": "This is one of Vedantu's strongest recent data points.",
+            "action": f"Create a follow-up or short around '{video['title']}'.",
+            "format": "Long-form" if video["views_per_day"] > 500 else "Short",
+            "momentum_score": min(100, int(video["views_per_day"] / 10)),
+            "confidence_score": 70,
+            "priority": "HIGH",
+        })
+
+    if not opportunities:
+        opportunities = [{
+            "rank": 1,
+            "title": "Re-run after Gemini quota recovers",
+            "why": "The current sample does not have enough upload data for a precise ranking.",
+            "action": "Use Morning Briefing to choose one anchor topic and publish a follow-up.",
+            "format": "Mixed",
+            "momentum_score": 50,
+            "confidence_score": 50,
+            "priority": "HIGH",
+        }]
+
+    content_gaps = []
+    for c in top_competitors:
+        content_gaps.append({
+            "topic": c["name"],
+            "evidence": f"Avg views/day around {int(c['avg_vpd']):,} in the current sample.",
+            "vedantu_status": "Needs Gemini analysis to compare topic depth.",
+            "urgency": "HIGH" if c["avg_vpd"] > 0 else "MEDIUM",
+        })
+
+    weekly_priorities = [
+        {
+            "day": "Monday",
+            "action": f"Pick one anchor topic from the best recent Vedantu upload for {v_name}.",
+            "channel": v_name,
+            "format": "Planning",
+            "title_idea": goal[:80] if goal else "Set a growth goal for the week",
+        },
+        {
+            "day": "Tuesday",
+            "action": "Publish a short-form derivative of the strongest recent upload.",
+            "channel": v_name,
+            "format": "Short",
+            "title_idea": "Short-form follow-up",
+        },
+        {
+            "day": "Wednesday",
+            "action": "Review competitor uploads and title patterns.",
+            "channel": "Competitors",
+            "format": "Research",
+            "title_idea": "Title pattern review",
+        },
+        {
+            "day": "Thursday",
+            "action": "Ship the main long-form video.",
+            "channel": v_name,
+            "format": "Long-form",
+            "title_idea": "Main topic video",
+        },
+        {
+            "day": "Friday",
+            "action": "Review performance and prepare the next test.",
+            "channel": v_name,
+            "format": "Review",
+            "title_idea": "Performance check-in",
+        },
+    ]
+
+    livestream_recommendations = []
+    for stream in v_str[:3]:
+        livestream_recommendations.append({
+            "topic": stream["title"],
+            "timing": "This week",
+            "duration": "45-60 min",
+            "hook": "Expand an existing live or webinar topic.",
+            "why_now": "Live content can extend reach while Gemini quota is down.",
+        })
+    if not livestream_recommendations:
+        livestream_recommendations = [{
+            "topic": "No recent livestream data",
+            "timing": "When quota is back",
+            "duration": "30-45 min",
+            "hook": "Choose a high-velocity topic from the upload data.",
+            "why_now": "A live session is best planned after the AI quota recovers.",
+        }]
+
+    fastest_growing_topics = [
+        {
+            "topic": video["title"],
+            "momentum_score": min(100, int(video["views_per_day"] / 10)),
+            "evidence": f"{int(video['views_per_day']):,} views/day in the current sample.",
+            "vedantu_coverage": "Strong" if idx == 1 else "Weak",
+        }
+        for idx, video in enumerate(top_uploads[:5], start=1)
+    ]
+    if not fastest_growing_topics:
+        fastest_growing_topics = [{
+            "topic": "No recent uploads found",
+            "momentum_score": 0,
+            "evidence": "The current sample did not return enough data.",
+            "vedantu_coverage": "None",
+        }]
+
+    return {
+        "executive_summary": (
+            f"Gemini is temporarily unavailable, so this fallback strategy is built from live Vedantu and competitor data for {v_name}."
+        ),
+        "opportunities": opportunities,
+        "content_gaps": content_gaps or [{
+            "topic": "Quota-safe fallback",
+            "evidence": "Gemini did not return a usable JSON response.",
+            "vedantu_status": "Needs rerun when quota is available.",
+            "urgency": "MEDIUM",
+        }],
+        "weekly_priorities": weekly_priorities,
+        "livestream_recommendations": livestream_recommendations,
+        "fastest_growing_topics": fastest_growing_topics,
+        "bold_experiment": {
+            "idea": "Use one recent high-velocity topic as both a long-form and short-form asset.",
+            "rationale": f"Keeps the workflow moving for {audience} even while Gemini quota is unavailable.",
+            "risk": "MEDIUM",
+            "potential_upside": "A usable plan today without being blocked by quota.",
+        },
+    }
 
 
 def _render(data, v_name, audience, v_info, comp_data):
