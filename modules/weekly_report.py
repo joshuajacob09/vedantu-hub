@@ -11,6 +11,11 @@ from utils.youtube_helpers import get_channel_info, get_recent_uploads
 from utils.api_clients import get_gemini_model
 
 
+def _format_subscribers(info: dict) -> str:
+    subscribers = info.get("subscribers") if info else None
+    return f"{subscribers:,}" if isinstance(subscribers, int) else "N/A"
+
+
 def render():
     page_header('Weekly Report Generator', 'One-click intelligence report. Uses top 5 competitors to stay within API quota.', '📄')
 
@@ -46,7 +51,7 @@ You are writing a weekly YouTube intelligence report for the Vedantu content tea
 Date: {today}
 
 Vedantu channel ({v_name}):
-- Subscribers: {v_info.get('subscribers', 'N/A'):,}
+- Subscribers: {_format_subscribers(v_info)}
 - Recent uploads: {[v['title'] for v in v_videos]}
 
 Top competitor summary:
@@ -63,14 +68,46 @@ Write a professional weekly report with these sections:
 Tone: professional but readable. Use bullet points where helpful.
 Sign off: "Report prepared by the Content Intelligence Hub | {today}"
         """
-        response = get_gemini_model().generate_content(prompt)
+        try:
+            response = get_gemini_model().generate_content(prompt)
+            report_text = response.text
+        except Exception:
+            st.warning(
+                "Gemini quota is unavailable right now, so showing a data-only report instead."
+            )
+            top_uploads = "\n".join(
+                f"- {v['title']} ({v['views']:,} views, {int(v['views_per_day']):,}/day)"
+                for v in v_videos[:5]
+            ) or "- No recent uploads found"
+            competitor_lines = "\n".join(comp_summary) or "- No competitor data available"
+            report_text = f"""## Weekly Intelligence Report — {today}
+
+### Executive Summary
+- {v_name} has {len(v_videos)} recent uploads in the current sample.
+- Top competitor channels continue to be tracked from the quota-safe shortlist.
+
+### Vedantu Performance This Week
+{top_uploads}
+
+### Competitor Watch
+{competitor_lines}
+
+### Recommended Actions for Next Week
+1. Double down on the formats already appearing in the strongest recent uploads.
+2. Prioritise topics where competitors are publishing consistently but Vedantu is lighter.
+3. Re-run this report once Gemini quota is available for a fuller narrative.
+
+### One Risk to Watch
+- If quota remains exhausted, AI-generated commentary will be temporarily unavailable.
+
+Report prepared by the Content Intelligence Hub | {today}"""
 
     st.markdown(f"## Weekly Intelligence Report — {today}")
-    st.markdown(response.text)
+    st.markdown(report_text)
 
     st.download_button(
         label="⬇️ Download as .txt",
-        data=response.text,
+        data=report_text,
         file_name=f"vedantu_report_{date.today().isoformat()}.txt",
         mime="text/plain",
     )
