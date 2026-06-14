@@ -41,26 +41,4 @@ def get_gemini_model():
         st.stop()
 
     genai.configure(api_key=api_key)
-
-    # Try models in order — handles API version differences
-    models_to_try = [
-        "gemini-2.0-flash",
-        "gemini-2.0-flash-lite",
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-latest",
-    ]
-
-    for model_name in models_to_try:
-        try:
-            model = genai.GenerativeModel(model_name)
-            # Quick test to verify the model works
-            model.generate_content("hi", generation_config={"max_output_tokens": 5})
-            return model
-        except Exception:
-            continue
-
-    st.error(
-        "No Gemini model available. Check your API key at "
-        "https://aistudio.google.com and make sure it has access to Gemini models."
-    )
-    st.stop()
+    return genai.GenerativeModel("gemini-2.0-flash")
