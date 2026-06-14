@@ -561,17 +561,9 @@ def kpi_card(label: str, value: str, delta: str = "",
         f"border-top:2px solid {accent_color};"
     ) if accent_color else ""
 
+    shadow = "0 1px 3px rgba(0,0,0,0.25),0 4px 12px rgba(0,0,0,0.15),inset 0 1px 0 rgba(255,255,255,0.03)"
     st.markdown(f"""
-    <div style="background:{C['card']};
-                border:1px solid {C['border']};
-                border-radius:14px;
-                padding:22px 24px;
-                height:100%;
-                {top_accent}
-                box-shadow:0 1px 3px rgba(0,0,0,0.25),
-                           0 4px 12px rgba(0,0,0,0.15),
-                           inset 0 1px 0 rgba(255,255,255,0.03);
-                transition:border-color .2s,box-shadow .2s;">
+    <div style="background:{C['card']};border:1px solid {C['border']};border-radius:14px;padding:22px 24px;height:100%;{top_accent}box-shadow:{shadow};transition:border-color .2s;">
         <div style="font-size:10.5px;font-weight:600;letter-spacing:0.09em;
                     color:{C['text3']};text-transform:uppercase;
                     margin-bottom:11px;">{label}</div>
@@ -609,14 +601,7 @@ def insight_card(priority: str, title: str, reason: str,
     ) if impact else ""
 
     st.markdown(f"""
-    <div style="background:{C['card']};
-                border:1px solid {C['border']};
-                border-left:2px solid {c};
-                border-radius:12px;
-                padding:18px 20px;
-                margin-bottom:10px;
-                box-shadow:0 1px 3px rgba(0,0,0,0.2);
-                transition:border-color .15s;">
+    <div style="background:{C['card']};border:1px solid {C['border']};border-left:2px solid {c};border-radius:12px;padding:18px 20px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.2);transition:border-color .15s;">
         <div style="display:flex;align-items:center;gap:9px;margin-bottom:11px;">
             <span style="background:{bg};color:{c};
                          font-size:9.5px;font-weight:700;
