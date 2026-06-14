@@ -1,7 +1,7 @@
-# app.py — Entry point.
+# app.py — Premium enterprise shell.
 
 import streamlit as st
-from config import APP_TITLE, APP_ICON, FOOTER_TEXT
+from config import FOOTER_TEXT
 from utils.ui import inject_css, C
 
 st.set_page_config(
@@ -13,77 +13,81 @@ st.set_page_config(
 
 inject_css()
 
-# ── Sidebar ───────────────────────────────────────────
-NAV = [
-    ("overview",     "◎",  "Overview",           "Morning Briefing"),
-    ("vedantu",      "⊡",  "Vedantu",            "Vedantu Network"),
-    ("competitors",  "◈",  "Competitors",        "Competitor Intelligence"),
-    ("trends",       "⟳",  "Trends",             "Trend Detection"),
-    ("gaps",         "◻",  "Content Gaps",       "Content Gap Analysis"),
-    ("ai",           "✦",  "AI Strategist",      "AI Strategist"),
-    ("reports",      "⊞",  "Reports",            "Weekly Report"),
-    ("search",       "◎",  "Search",             "Search"),
-    ("export",       "↓",  "Export",             "Export"),
+# ── Navigation definition ─────────────────────────────
+# (key, icon, label, page_name)
+# Icons: clean geometric, no emojis
+NAV_ITEMS = [
+    ("overview",    "○",  "Morning Briefing",   "Morning Briefing"),
+    ("vedantu",     "□",  "Vedantu Channels",   "Vedantu Network"),
+    ("competitors", "◇",  "Competitors",        "Competitor Intelligence"),
+    ("trends",      "△",  "Trends",             "Trend Detection"),
+    ("gaps",        "▽",  "Content Gaps",       "Content Gap Analysis"),
+    ("ai",          "✦",  "AI Strategist",      "AI Strategist"),
+    ("reports",     "≡",  "Weekly Report",      "Weekly Report"),
+    ("search",      "⌕",  "Search",             "Search"),
+    ("export",      "↓",  "Export Data",        "Export"),
 ]
 
 if "page" not in st.session_state:
     st.session_state.page = "Morning Briefing"
 
+# ── Sidebar ───────────────────────────────────────────
 with st.sidebar:
-    st.markdown(f"""
-    <div style="padding:24px 20px 16px;">
-        <div style="font-size:13px;font-weight:700;color:#F8FAFC;
-                    letter-spacing:-0.01em;">Vedantu Intelligence</div>
-        <div style="font-size:11px;color:#334155;margin-top:2px;
-                    font-weight:500;">YouTube Operations</div>
+    # Brand mark
+    st.markdown("""
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-name">Vedantu Intelligence</div>
+        <div class="sidebar-brand-sub">YouTube Operations Platform</div>
     </div>
-    <div style="height:1px;background:rgba(255,255,255,0.06);margin:0 8px 8px;"></div>
+    <div class="sidebar-sep"></div>
     """, unsafe_allow_html=True)
 
-    for key, icon, label, page_name in NAV:
-        is_active = st.session_state.page == page_name
-        active_class = "active" if is_active else ""
+    # Nav items
+    for key, icon, label, page_name in NAV_ITEMS:
+        active = st.session_state.page == page_name
         if st.button(
-            f"{icon}  {label}",
+            f"{icon}   {label}",
             key=f"nav_{key}",
             use_container_width=True,
-            type="primary" if is_active else "secondary",
+            type="primary" if active else "secondary",
         ):
             st.session_state.page = page_name
             st.rerun()
 
-    st.markdown(f"""
-    <div style="position:absolute;bottom:0;left:0;right:0;
-                padding:16px 20px;border-top:1px solid rgba(255,255,255,0.04);">
-        <div style="font-size:11px;color:#334155;line-height:1.9;">
-            78 channels · Cached 1h
+    # Footer status
+    st.markdown("""
+    <div style="padding:20px 18px 16px;margin-top:8px;
+                border-top:1px solid rgba(255,255,255,0.04);">
+        <div class="sidebar-status">
+            78 channels tracked<br>
+            Data cached 1 hour
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-# ── Router ────────────────────────────────────────────
-page = st.session_state.page
+# ── Error-safe router ─────────────────────────────────
+ROUTES = {
+    "Morning Briefing":        "modules.dashboard",
+    "Vedantu Network":         "modules.vedantu_intelligence",
+    "Competitor Intelligence": "modules.competitor_intelligence",
+    "Trend Detection":         "modules.trend_detection",
+    "Content Gap Analysis":    "modules.content_gap",
+    "AI Strategist":           "modules.ai_strategist",
+    "Weekly Report":           "modules.weekly_report",
+    "Search":                  "modules.search",
+    "Export":                  "modules.export",
+}
 
-if   page == "Morning Briefing":
-    from modules.dashboard               import render; render()
-elif page == "Vedantu Network":
-    from modules.vedantu_intelligence    import render; render()
-elif page == "Competitor Intelligence":
-    from modules.competitor_intelligence import render; render()
-elif page == "Trend Detection":
-    from modules.trend_detection         import render; render()
-elif page == "Content Gap Analysis":
-    from modules.content_gap             import render; render()
-elif page == "AI Strategist":
-    from modules.ai_strategist           import render; render()
-elif page == "Weekly Report":
-    from modules.weekly_report           import render; render()
-elif page == "Search":
-    from modules.search                  import render; render()
-elif page == "Export":
-    from modules.export                  import render; render()
-else:
-    from modules.dashboard               import render; render()
+def _render(module_path: str):
+    try:
+        import importlib
+        importlib.import_module(module_path).render()
+    except Exception as e:
+        st.error("This page encountered an error. Please try refreshing.")
+        with st.expander("Technical details"):
+            st.code(str(e))
+
+_render(ROUTES.get(st.session_state.page, "modules.dashboard"))
 
 # ── Footer ────────────────────────────────────────────
 st.markdown(

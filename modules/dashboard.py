@@ -1,15 +1,14 @@
-# modules/dashboard.py — Morning Briefing. Logic unchanged.
+# modules/dashboard.py — Morning Briefing. Fixes 5, 6, 7, 14, 20.
 
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 from datetime import datetime, date
 
 from config import VEDANTU_CHANNELS
 from utils.registry import get_competitors_by_priority
 from utils.youtube_helpers import get_recent_uploads
-from utils.ui import C, page_header, section_header, kpi_card, alert_card, divider, empty_state, plotly_defaults
+from utils.ui import C, page_header, section_header, kpi_card, alert_card, divider, empty_state, plotly_defaults, data_timestamp
 
 EXAM_CALENDAR = [
     {"name": "JEE Mains S1",  "date": date(2026, 1, 22)},
@@ -23,9 +22,10 @@ def _days(d): return (d - date.today()).days
 def _is_short(s): return 0 < s <= 60
 
 
+# Fix #5: don't cache `today` — compute it outside cache
 @st.cache_data(ttl=3600)
-def _load_data():
-    today = date.today()
+def _fetch_channels():
+    """Only cache the API data, not the date."""
     tier1 = get_competitors_by_priority(1)
     vedantu_sample = {
         "Vedantu JEE":  VEDANTU_CHANNELS["Vedantu JEE Made Ejee"],
@@ -39,22 +39,24 @@ def _load_data():
     for c in tier1[:8]:
         ups = get_recent_uploads(c["id"])
         if ups: all_ch.append({"name": c["name"], "team": "Competitor", "uploads": ups})
-    return all_ch, today
+    return all_ch
 
 
 def render():
-    now = datetime.now().strftime("%a %d %b  %H:%M")
-    page_header(
-        "Morning Briefing",
-        "What happened while you were away.",
-        right_content=f'<span style="font-size:12px;color:{C["text3"]};">{now}</span>',
-    )
+    page_header("Morning Briefing", "What happened while you were away.")
 
-    all_ch, today = _load_data()
+    # Fix #7: show loading state with label before data appears
+    with st.spinner("Loading channel data — this may take a few seconds on first load..."):
+        all_ch = _fetch_channels()
 
-    # ── Exam strip ────────────────────────────────────
-    upcoming = sorted([e for e in EXAM_CALENDAR if _days(e["date"]) >= 0],
-                      key=lambda e: e["date"])[:5]
+    today = date.today()  # Fix #5: computed fresh every render
+
+    # Fix #14: only show exams with non-negative days
+    upcoming = sorted(
+        [e for e in EXAM_CALENDAR if _days(e["date"]) > 0],
+        key=lambda e: e["date"]
+    )[:5]
+
     if upcoming:
         cols = st.columns(len(upcoming))
         for col, exam in zip(cols, upcoming):
@@ -72,10 +74,9 @@ def render():
                             line-height:1.3;">{exam['name']}</div>
             </div>
             """, unsafe_allow_html=True)
-        st.markdown("<div style='margin-top:24px'/>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top:20px'/>", unsafe_allow_html=True)
 
-    # ── Executive summary alerts ──────────────────────
-    # Compute key signals
+    # Signals
     vedantu_7d = sum(
         1 for ch in all_ch if ch["team"] == "Vedantu"
         for v in ch["uploads"]
@@ -86,12 +87,12 @@ def render():
         for v in ch["uploads"]
         if (today - date.fromisoformat(v["published"])).days <= 7
     )
-    viral = max(
-        (v for ch in all_ch for v in ch["uploads"]),
-        key=lambda v: v["views_per_day"], default=None
-    )
+    all_vids = [v for ch in all_ch for v in ch["uploads"]]
+    viral = max(all_vids, key=lambda v: v["views_per_day"], default=None)
     inactive = [
-        ch["name"] for ch in all_ch if ch["team"] == "Vedantu"
+        ch["name"] for ch in all_ch
+        if ch["team"] == "Vedantu"
+        and ch["uploads"]
         and (today - date.fromisoformat(ch["uploads"][0]["published"])).days > 5
     ]
 
@@ -99,81 +100,69 @@ def render():
         alert_card(f"Inactive 5+ days: {', '.join(inactive)}", "warning")
     if viral:
         alert_card(
-            f"Trending now: \"{viral['title'][:60]}\" — {int(viral['views_per_day']):,} views/day",
+            f'Trending: "{viral["title"][:65]}" — {int(viral["views_per_day"]):,} views/day',
             "info"
         )
     if comp_7d > vedantu_7d * 2:
         alert_card(
-            f"Competitors uploaded {comp_7d} videos this week vs Vedantu's {vedantu_7d}. Consider increasing cadence.",
+            f"Competitors uploaded {comp_7d} videos this week vs Vedantu's {vedantu_7d}.",
             "danger"
         )
 
     divider()
-
-    # ── KPI row ───────────────────────────────────────
     section_header("This Week at a Glance")
+
+    # Fix #6: all 4 KPI cards always render
     k1, k2, k3, k4 = st.columns(4)
-    with k1: kpi_card("Vedantu Uploads", str(vedantu_7d), sublabel="last 7 days")
-    with k2: kpi_card("Competitor Uploads", str(comp_7d), sublabel="last 7 days")
-    with k3:
-        if viral: kpi_card("Top Velocity", f"{int(viral['views_per_day']):,}", sublabel="views/day")
-    with k4:
-        shorts = sum(1 for ch in all_ch for v in ch["uploads"] if _is_short(v["duration_sec"]))
-        total  = sum(len(ch["uploads"]) for ch in all_ch)
-        kpi_card("Shorts Mix", f"{int(shorts/total*100)}%" if total else "—", sublabel="across all channels")
+    shorts = sum(1 for ch in all_ch for v in ch["uploads"] if _is_short(v["duration_sec"]))
+    total  = sum(len(ch["uploads"]) for ch in all_ch)
+    with k1: kpi_card("Vedantu Uploads",    str(vedantu_7d),                                    sublabel="last 7 days")
+    with k2: kpi_card("Competitor Uploads", str(comp_7d),                                       sublabel="last 7 days")
+    with k3: kpi_card("Top Velocity",       f"{int(viral['views_per_day']):,}" if viral else "—", sublabel="views/day")
+    with k4: kpi_card("Shorts Mix",         f"{int(shorts/total*100)}%" if total else "—",       sublabel="all channels")
 
     divider()
-
-    # ── Upload cadence — single chart ─────────────────
-    section_header("Upload Cadence", "Videos published in the last 7 days per channel")
+    section_header("Upload Cadence", "Videos published in the last 7 days")
+    data_timestamp()  # Fix #20
 
     cad_rows = []
     for ch in all_ch:
         u7 = [v for v in ch["uploads"]
               if (today - date.fromisoformat(v["published"])).days <= 7]
         if u7 or ch["team"] == "Vedantu":
-            cad_rows.append({
-                "Channel": ch["name"],
-                "Team":    ch["team"],
-                "Uploads": len(u7),
-            })
+            cad_rows.append({"Channel": ch["name"], "Team": ch["team"], "Uploads": len(u7)})
 
     if cad_rows:
-        df = pd.DataFrame(cad_rows).sort_values("Uploads", ascending=True)
-        fig = px.bar(
-            df, x="Uploads", y="Channel", orientation="h",
-            color="Team",
-            color_discrete_map={"Vedantu": C["accent"], "Competitor": C["text3"]},
-        )
+        df  = pd.DataFrame(cad_rows).sort_values("Uploads", ascending=True)
+        fig = px.bar(df, x="Uploads", y="Channel", orientation="h", color="Team",
+                     color_discrete_map={"Vedantu": C["accent"], "Competitor": C["text3"]})
         fig.update_traces(marker_line_width=0)
-        fig.update_layout(**plotly_defaults(height=max(280, len(cad_rows) * 28)))
+        fig.update_layout(**plotly_defaults(height=max(260, len(cad_rows) * 28)))
         fig.update_layout(showlegend=True,
-                          legend=dict(orientation="h", y=1.05, x=0,
+                          legend=dict(orientation="h", y=1.06, x=0,
                                       bgcolor="rgba(0,0,0,0)", font=dict(size=11)))
         st.plotly_chart(fig, use_container_width=True)
 
     divider()
+    section_header("Viral This Week", "Top 10 videos by views/day")
+    data_timestamp()  # Fix #20
 
-    # ── Viral this week ───────────────────────────────
-    section_header("Viral This Week", "Top 10 videos by views/day velocity")
-
-    viral_rows = []
-    for ch in all_ch:
-        for v in ch["uploads"]:
-            if (today - date.fromisoformat(v["published"])).days <= 7:
-                viral_rows.append({
-                    "Channel":   ch["name"],
-                    "Title":     v["title"],
-                    "Views/Day": int(v["views_per_day"]),
-                    "Views":     v["views"],
-                    "Format":    "Short" if _is_short(v["duration_sec"]) else "Long",
-                    "URL":       v["url"],
-                })
+    viral_rows = [
+        {
+            "Channel":   ch["name"],
+            "Title":     v["title"],
+            "Views/Day": int(v["views_per_day"]),
+            "Views":     v["views"],
+            "Format":    "Short" if _is_short(v["duration_sec"]) else "Long",
+            "URL":       v["url"],
+        }
+        for ch in all_ch
+        for v in ch["uploads"]
+        if (today - date.fromisoformat(v["published"])).days <= 7
+    ]
 
     if viral_rows:
-        df_v = (pd.DataFrame(viral_rows)
-                .sort_values("Views/Day", ascending=False)
-                .head(10))
+        df_v = pd.DataFrame(viral_rows).sort_values("Views/Day", ascending=False).head(10)
         st.dataframe(df_v, use_container_width=True, hide_index=True,
                      column_config={
                          "URL":       st.column_config.LinkColumn("Watch", display_text="▶"),
@@ -181,4 +170,4 @@ def render():
                          "Views/Day": st.column_config.NumberColumn(format="%d"),
                      })
     else:
-        empty_state("No videos from the last 7 days found.")
+        empty_state("No videos published in the last 7 days.")

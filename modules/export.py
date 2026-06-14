@@ -11,7 +11,7 @@ from utils.youtube_helpers import get_recent_uploads, get_channel_info
 
 
 def render():
-    page_header('Export Data', 'Download raw channel data as CSV or JSON for offline analysis.', '⬇️')
+    page_header('Export Data', 'Download raw channel data as CSV or JSON.')
 
     # ── Options ───────────────────────────────────────
     col1, col2 = st.columns(2)

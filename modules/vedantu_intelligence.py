@@ -50,7 +50,7 @@ def _extract_patterns(titles: list[str]) -> dict:
 
 
 def render():
-    page_header('Vedantu Intelligence', 'Full network health overview + deep channel benchmarking.', '🏫')
+    page_header('Vedantu Intelligence', 'Full network health overview and deep channel benchmarking.')
 
     view = st.radio(
         "View",
@@ -69,7 +69,7 @@ def render():
 # VIEW 1: Full network overview
 # ─────────────────────────────────────────────────────
 def _network_overview():
-    st.subheader("Vedantu Network — All Channels")
+    section_header("Vedantu Network — All Channels")
 
     with st.spinner("Loading all 19 Vedantu channels..."):
         rows = []

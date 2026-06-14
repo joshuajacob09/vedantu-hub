@@ -1,37 +1,59 @@
-# modules/weekly_report.py
-# Weekly Report Generator.
-# QUOTA FIX: uses TOP_COMPETITORS (5 channels) instead of
-# all 60 competitors, keeping daily quota impact low.
+# modules/weekly_report.py — Fixes 4, 8, 9, 13.
 
-import streamlit as st
+import re, streamlit as st
 from datetime import date
 from config import VEDANTU_CHANNELS, TOP_COMPETITORS
-from utils.ui import C, T, page_header, divider
+from utils.ui import C, T, page_header, section_header, divider, report_section
 from utils.youtube_helpers import get_channel_info, get_recent_uploads
 from utils.api_clients import get_gemini_model
 
 
-def _format_subscribers(info: dict) -> str:
-    subscribers = info.get("subscribers") if info else None
-    return f"{subscribers:,}" if isinstance(subscribers, int) else "N/A"
-
-
 def render():
-    page_header('Weekly Report Generator', 'One-click intelligence report. Uses top 5 competitors to stay within API quota.', '📄')
+    # Fix #3/#11: no emoji in page_header
+    page_header("Weekly Report", "One-click intelligence report using top 5 competitors.")
 
-    v_name = st.selectbox("Primary Vedantu channel", list(VEDANTU_CHANNELS.keys()))
+    v_name = st.selectbox("Vedantu channel", list(VEDANTU_CHANNELS.keys()))
 
-    if st.button("📊 Generate This Week's Report", type="primary"):
+    if st.button("Generate Report", type="primary"):
         _generate_report(v_name, VEDANTU_CHANNELS[v_name])
+
+
+def _parse_sections(text: str) -> list[tuple[str,str]]:
+    """
+    Parse Gemini markdown output into (title, content) pairs.
+    Fix #4: render as styled cards, not raw markdown dump.
+    """
+    # Split on ## or bold **Title** patterns
+    parts = re.split(r'\n(?=#{1,3}\s|\*\*\d+\.)', text.strip())
+    sections = []
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        # Extract heading
+        m = re.match(r'^#{1,3}\s*(.+?)[\n\r]', part)
+        if not m:
+            m = re.match(r'^\*\*(.+?)\*\*', part)
+        if m:
+            title   = m.group(1).strip().lstrip('0123456789. ')
+            content = part[m.end():].strip()
+        else:
+            title   = "Summary"
+            content = part
+        # Clean markdown bold from content
+        content = re.sub(r'\*\*(.+?)\*\*', r'\1', content)
+        content = content.replace('\n', '<br>')
+        if content:
+            sections.append((title, content))
+    return sections if sections else [("Report", text.replace('\n','<br>'))]
 
 
 def _generate_report(v_name, v_id):
     today = date.today().strftime("%B %d, %Y")
 
-    with st.spinner("Compiling data..."):
+    with st.spinner("Fetching channel data..."):
         v_info   = get_channel_info(v_id)
         v_videos = get_recent_uploads(v_id)
-
         comp_summary = []
         for c_name, c_id in TOP_COMPETITORS.items():
             c_info   = get_channel_info(c_id)
@@ -40,74 +62,47 @@ def _generate_report(v_name, v_id):
                 avg_vpd = sum(v["views_per_day"] for v in c_videos) / len(c_videos)
                 top_vid = max(c_videos, key=lambda v: v["views"])
                 comp_summary.append(
-                    f"{c_name}: {c_info.get('subscribers', 0):,} subs | "
+                    f"{c_name}: {c_info.get('subscribers',0):,} subs | "
                     f"Avg views/day: {avg_vpd:,.0f} | "
-                    f"Top video: '{top_vid['title']}' ({top_vid['views']:,} views)"
+                    f"Top: '{top_vid['title'][:50]}' ({top_vid['views']:,} views)"
                 )
 
-    with st.spinner("Gemini is writing the report..."):
-        prompt = f"""
-You are writing a weekly YouTube intelligence report for the Vedantu content team.
+    with st.spinner("Generating report..."):
+        prompt = f"""Weekly YouTube intelligence report for Vedantu content team.
 Date: {today}
 
 Vedantu channel ({v_name}):
-- Subscribers: {_format_subscribers(v_info)}
+- Subscribers: {v_info.get('subscribers','N/A'):,}
 - Recent uploads: {[v['title'] for v in v_videos]}
 
-Top competitor summary:
+Competitor summary:
 {chr(10).join(comp_summary)}
 
-Write a professional weekly report with these sections:
-1. **Executive Summary** (3 sentences max)
-2. **Vedantu Performance This Week**
-3. **Competitor Watch** (who is surging, who is slowing)
-4. **Top Trending Topics Across the Industry**
-5. **Recommended Actions for Next Week** (numbered, specific)
-6. **One Risk to Watch**
+Write sections:
+## Executive Summary
+## Vedantu Performance
+## Competitor Watch
+## Trending Topics
+## Recommended Actions
+## Risk to Watch
 
-Tone: professional but readable. Use bullet points where helpful.
-Sign off: "Report prepared by the Content Intelligence Hub | {today}"
-        """
-        try:
-            response = get_gemini_model().generate_content(prompt)
-            report_text = response.text
-        except Exception:
-            st.warning(
-                "Gemini quota is unavailable right now, so showing a data-only report instead."
-            )
-            top_uploads = "\n".join(
-                f"- {v['title']} ({v['views']:,} views, {int(v['views_per_day']):,}/day)"
-                for v in v_videos[:5]
-            ) or "- No recent uploads found"
-            competitor_lines = "\n".join(comp_summary) or "- No competitor data available"
-            report_text = f"""## Weekly Intelligence Report — {today}
+Keep each section to 3-5 bullet points. Be specific and direct."""
 
-### Executive Summary
-- {v_name} has {len(v_videos)} recent uploads in the current sample.
-- Top competitor channels continue to be tracked from the quota-safe shortlist.
+        response = get_gemini_model().generate_content(prompt)
 
-### Vedantu Performance This Week
-{top_uploads}
+    # Fix #13: use section_header, not raw st.markdown heading
+    section_header(f"Weekly Intelligence Report — {today}")
 
-### Competitor Watch
-{competitor_lines}
+    # Fix #4: parse and render as cards
+    sections = _parse_sections(response.text)
+    for title, content in sections:
+        report_section(title, content)
 
-### Recommended Actions for Next Week
-1. Double down on the formats already appearing in the strongest recent uploads.
-2. Prioritise topics where competitors are publishing consistently but Vedantu is lighter.
-3. Re-run this report once Gemini quota is available for a fuller narrative.
-
-### One Risk to Watch
-- If quota remains exhausted, AI-generated commentary will be temporarily unavailable.
-
-Report prepared by the Content Intelligence Hub | {today}"""
-
-    st.markdown(f"## Weekly Intelligence Report — {today}")
-    st.markdown(report_text)
+    divider()
 
     st.download_button(
-        label="⬇️ Download as .txt",
-        data=report_text,
+        label="Download as .txt",
+        data=response.text,
         file_name=f"vedantu_report_{date.today().isoformat()}.txt",
         mime="text/plain",
     )

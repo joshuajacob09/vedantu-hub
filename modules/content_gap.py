@@ -50,7 +50,7 @@ def _tag(title: str) -> list[str]:
 
 
 def render():
-    page_header('Content Gap Analysis', 'See the full picture of what the market covers vs what Vedantu covers.', '🔍')
+    page_header('Content Gap Analysis', 'See what the market covers vs what Vedantu covers.')
 
     mode = st.radio(
         "Analysis mode",
@@ -287,12 +287,5 @@ Be specific. Name subjects, topics, and title patterns.
 Write as if presenting to a content VP who needs to make decisions today.
     """
     with st.spinner("Gemini is analysing gaps..."):
-        try:
-            response = get_gemini_model().generate_content(prompt)
-            report_text = response.text
-        except Exception:
-            st.warning(
-                "Gemini quota is unavailable right now, so the heatmap remains available but the AI gap report is skipped."
-            )
-            return
-    st.markdown(report_text)
+        response = get_gemini_model().generate_content(prompt)
+    st.markdown(response.text)

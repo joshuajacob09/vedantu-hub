@@ -10,7 +10,7 @@ from utils.youtube_helpers import get_recent_uploads
 
 
 def render():
-    page_header('Search', 'Search across all channels by keyword. Searches video titles from recent uploads.', '🔎')
+    page_header('Search', 'Search video titles across all 78 tracked channels.')
 
     query = st.text_input(
         "Enter a keyword or topic",
