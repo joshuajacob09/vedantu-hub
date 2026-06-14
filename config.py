@@ -11,7 +11,7 @@ from utils.registry import as_name_id_dict, get_all_competitors, get_top_competi
 APP_TITLE    = "Vedantu Content Intelligence Hub"
 APP_ICON     = "🎯"
 FOOTER_TEXT  = "Built by Joshua Jacob | YouTube Intern @ Vedantu"
-GEMINI_MODEL = "gemini-2.0-flash"
+GROQ_MODEL   = "llama-3.3-70b-versatile"
 MAX_RESULTS  = 10
 
 # ── Vedantu channels ──────────────────────────────────
