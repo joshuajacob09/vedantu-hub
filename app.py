@@ -26,6 +26,7 @@ NAV_ITEMS = [
     ("reports",     "≡",  "Weekly Report",      "Weekly Report"),
     ("search",      "⌕",  "Search",             "Search"),
     ("export",      "↓",  "Export Data",        "Export"),
+    ("debug",       "?",  "Debug",              "Debug"),
 ]
 
 if "page" not in st.session_state:
@@ -76,6 +77,7 @@ ROUTES = {
     "Weekly Report":           "modules.weekly_report",
     "Search":                  "modules.search",
     "Export":                  "modules.export",
+    "Debug":                   "modules.debug",
 }
 
 def _render(module_path: str):
